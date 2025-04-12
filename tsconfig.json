@@ -11,8 +11,12 @@
     "outDir": "./dist",
     "baseUrl": "./src",                 // ✅ trỏ vào src
     "paths": {
-      "@/*": ["*"],                     // ✅ alias @ -> src
-      "@entities/*": ["entities/*"]     // ✅ alias @entities -> src/entities
+      "@/*": ["*"],                         // ✅ alias @ -> src
+      "@entities/*": ["entities/*"],         // ✅ alias @entities -> src/entities
+      "@auth/*": ["auth/*"],                 // ✅ alias @auth -> src/auth
+      "@permissions/*": ["permissions/*"],   // ✅ alias @permissions -> src/permissions
+      "@roles/*": ["roles/*"],               // ✅ alias @roles -> src/roles
+      "@users/*": ["users/*"]                // ✅ alias @users -> src/users
     },
     "incremental": true,
     "skipLibCheck": true,

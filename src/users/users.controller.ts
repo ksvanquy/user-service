@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { User } from '../entities/user.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { UsersService } from '@users/users.service';               // Alias @users -> src/users
+import { User } from '@entities/user.entity';                        // Alias @entities -> src/entities
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';          // Alias @auth -> src/auth/guards
+import { RolesGuard } from '@auth/guards/roles.guard';               // Alias @auth -> src/auth/guards
+import { Roles } from '@auth/decorators/roles.decorator';
+
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
