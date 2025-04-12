@@ -37,10 +37,16 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true })
   lastLoginAt: Date;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  // @CreateDateColumn({ type: 'timestamptz' })
+  // createdAt: Date;
+
+  // @UpdateDateColumn({ type: 'timestamptz' })
+  // updatedAt: Date;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
   // One-to-One: Profile

@@ -3,12 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { User } from '@users/entities/user.entity'; 
+import { User } from '@users/entities/user.entity';
 import { UserProfile } from '@user-profile/entities/user-profile.entity';
 import { RefreshToken } from '@refresh-token/entities/refresh-token.entity';
-import { Role } from '@roles/entities/role.entity';  
-import { Permission } from '@permissions/entities/permission.entity';  
-import { UserToken } from '@user-token/entities/user-token.entity';  
+import { Role } from '@roles/entities/role.entity';
+import { Permission } from '@permissions/entities/permission.entity';
+import { UserToken } from '@user-token/entities/user-token.entity';
 
 import { AuthModule } from '@auth/auth.module';
 import { UsersModule } from '@users/users.module';

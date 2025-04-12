@@ -2,13 +2,14 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@users/entities/user.entity';
-import { UserProfile } from '@user-profile/entities/user-profile.entity';
 import { Role } from '@roles/entities/role.entity';
 import { RegisterUserDto } from '@users/dto/register-user.dto';
+import { CreateUserDto } from '@users/dto/create-user.dto';
 import { ChangePasswordDto } from '@users/dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -17,8 +18,6 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(UserProfile)
-    private readonly profileRepository: Repository<UserProfile>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
   ) {}
@@ -52,6 +51,75 @@ export class UsersService {
     return result;
   }
 
+  async create(dto: CreateUserDto): Promise<User> {
+    const exists = await this.userRepository.findOne({
+      where: [{ username: dto.username }, { email: dto.email }],
+    });
+    if (exists) throw new ConflictException('User already exists');
+
+    const userWithEmail = await this.userRepository.findOne({
+      where: { email: dto.email },
+    });
+    if (userWithEmail) {
+      throw new ConflictException('Email is already taken');
+    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const user = this.userRepository.create({
+      ...dto,
+      password: hashedPassword,
+    });
+    const savedUser = await this.userRepository.save(user);
+
+    return savedUser;
+  }
+
+  async update(id: number, updateUserDto: Partial<User>): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    // Hash password nếu có
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    // Gộp thông tin cũ với thông tin mới
+    const updated = Object.assign(user, updateUserDto);
+    return this.userRepository.save(updated);
+  }
+
+  async remove(id: number): Promise<void> {
+    const user = await this.findOne(id);
+    await this.userRepository.remove(user);
+  }
+
+  async changePassword(
+    userId: number,
+    dto: ChangePasswordDto,
+  ): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    const isMatch = await bcrypt.compare(dto.oldPassword, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Old password is incorrect');
+    }
+
+    user.password = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepository.save(user);
+
+    return 'Password changed successfully';
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('User not found');
+    console.log('Password reset token is working');
+  }
+
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
       relations: ['profile', 'roles'],
@@ -80,17 +148,6 @@ export class UsersService {
     return user;
   }
 
-  async update(id: number, updateData: Partial<User>): Promise<User> {
-    const user = await this.findOne(id);
-    Object.assign(user, updateData);
-    return this.userRepository.save(user);
-  }
-
-  async remove(id: number): Promise<void> {
-    const user = await this.findOne(id);
-    await this.userRepository.remove(user);
-  }
-
   async assignRole(userId: number, roleId: number): Promise<User> {
     const user = await this.findOne(userId);
     const role = await this.roleRepository.findOne({ where: { id: roleId } });
@@ -99,39 +156,5 @@ export class UsersService {
     }
     user.roles = [...(user.roles || []), role];
     return this.userRepository.save(user);
-  }
-
-  async changePassword(
-    userId: number,
-    changePasswordDto: ChangePasswordDto,
-  ): Promise<string> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    console.log('User found:', user);
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Kiểm tra mật khẩu cũ (so sánh mật khẩu đã mã hóa)
-    const isOldPasswordValid = await bcrypt.compare(
-      changePasswordDto.oldPassword,
-      user.password,
-    );
-
-    if (!isOldPasswordValid) {
-      throw new Error('Incorrect old password');
-    }
-
-    // Mã hóa mật khẩu mới
-    const hashedNewPassword = await bcrypt.hash(
-      changePasswordDto.newPassword,
-      10,
-    );
-
-    // Cập nhật mật khẩu mới cho người dùng
-    user.password = hashedNewPassword;
-    await this.userRepository.save(user);
-
-    return 'Password changed successfully';
   }
 }

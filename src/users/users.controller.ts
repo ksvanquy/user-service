@@ -1,20 +1,64 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
-import { UsersService } from '@users/users.service';               // Alias @users -> src/users
-import { User } from '@users/entities/user.entity';                        // Alias @entities -> src/entities
-import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';          // Alias @auth -> src/auth/guards
-import { RolesGuard } from '@auth/guards/roles.guard';               // Alias @auth -> src/auth/guards
-import { Roles } from '@auth/decorators/roles.decorator';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { UsersService } from '@users/users.service';
+import { User } from '@users/entities/user.entity';
+import { CreateUserDto } from '@users/dto/create-user.dto';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@auth/guards/roles.guard';
 import { ChangePasswordDto } from '@users/dto/change-password.dto';
-import { AuthGuard } from '@nestjs/passport';
-
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
+// @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // POST /users
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    // console.log('Received CreateUserDto:', createUserDto);
+    return await this.usersService.create(createUserDto);
+  }
+
+  // POST /users/register
+  @Patch(':id')
+  // @Roles('admin')
+  @HttpCode(HttpStatus.OK)
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: Partial<User>,
+  ): Promise<User> {
+    console.log('Update user id:', id);
+    console.log('Update data:', updateUserDto);
+    return this.usersService.update(+id, updateUserDto);
+  }
+
+  // POST /users/delete
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(+id);
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string): Promise<void> {
+    // Tạo token reset password
+    // Gửi email, bạn có thể trả về token hoặc lưu vào cơ sở dữ liệu nếu cần.
+    return this.usersService.forgotPassword(email);
+  }
+
+  // POST /users/register
   @Get()
-  @Roles('admin')
   findAll() {
     return this.usersService.findAll();
   }
@@ -25,60 +69,24 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles('admin')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
   }
 
-  @Patch(':id')
-  @Roles('admin')
-  update(@Param('id') id: string, @Body() updateUserDto: Partial<User>) {
-    return this.usersService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  @Roles('admin')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
-  }
-
   @Post(':id/roles/:roleId')
-  @Roles('admin')
   assignRole(@Param('id') id: string, @Param('roleId') roleId: string) {
     return this.usersService.assignRole(+id, +roleId);
   }
-  
-  // @Patch(':id/change-password')
-  // // @UseGuards(AuthGuard('jwt'))
-  // async changePassword(
-  //   @Param('id') userId: number,
-  //   @Body() changePasswordDto: ChangePasswordDto,
-  //   @Request() req,
-  // ): Promise<string> {
-
-  //   // console.log('Request body:', changePasswordDto);
-  //   console.log('Logged in user:', req.user);  // // In ra thông tin người dùng đăng nhập
-  //   const loggedInUserId = req.user.userId;  // Lấy userId từ req.user
-  //   console.log('User ID in URL:', userId);  // In ra userId trong URL
-  
-  //   // if (userId !== loggedInUserId) {
-  //   //   throw new UnauthorizedException('You are not authorized to change this user\'s password');
-  //   // }
-  
-  //   return this.usersService.changePassword(userId, changePasswordDto);
-  // }
 
   @Patch(':id/change-password')
+  @HttpCode(HttpStatus.OK)
   async changePassword(
     @Param('id') userId: number,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<string> {
-    // Lấy thông tin userId từ URL, không cần kiểm tra qua JWT
-    console.log('User ID from URL:', userId);  // In ra userId từ URL
-    console.log('Change Password Data:', changePasswordDto); // In ra thông tin đổi mật khẩu
+    console.log('User ID:', userId);
+    console.log('Change Password Payload:', changePasswordDto);
 
-    // Giả sử bạn có logic thay đổi mật khẩu cho người dùng dựa trên userId
     return this.usersService.changePassword(userId, changePasswordDto);
   }
-
-} 
+}
