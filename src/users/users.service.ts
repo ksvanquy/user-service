@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException,ConflictException  } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@users/entities/user.entity';
 import { UserProfile } from '@user-profile/entities/user-profile.entity';
 import { Role } from '@roles/entities/role.entity';
+import { RegisterUserDto } from '@users/dto/register-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -14,7 +16,34 @@ export class UsersService {
     private readonly profileRepository: Repository<UserProfile>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-  ) {}
+  ) {}  
+
+    // Chức năng đăng ký
+    async register(userData: RegisterUserDto) {
+      if (!userData.password) {
+        throw new ConflictException('Password is required');
+      }
+  
+      // Kiểm tra xem email đã tồn tại chưa
+      const existingUser = await this.userRepository.findOne({ where: { email: userData.email } });
+      if (existingUser) {
+        throw new ConflictException('Email đã tồn tại');
+      }
+  
+      // Mã hóa mật khẩu
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+  
+      // Tạo người dùng mới
+      const user = this.userRepository.create({
+        ...userData,
+        password: hashedPassword,
+      });
+  
+      // Lưu người dùng vào cơ sở dữ liệu
+      await this.userRepository.save(user);
+      const { password, ...result } = user;
+      return result;
+    }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({

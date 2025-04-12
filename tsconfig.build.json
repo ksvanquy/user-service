@@ -9,7 +9,9 @@
       "@permissions/*": ["permissions/*"],
       "@roles/*": ["roles/*"],
       "@users/*": ["users/*"],
-      "@refresh-token/*": ["refresh-token/*"]
+      "@refresh-token/*": ["refresh-token/*"],
+      "@user-profile/*": ["user-profile/*"],             
+      "@user-token/*": ["user-token/*"], 
     }
   },
   "exclude": ["node_modules", "test", "dist", "**/*.spec.ts"]

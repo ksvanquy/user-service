@@ -3,10 +3,11 @@ import { Injectable, ConflictException, UnauthorizedException, NotFoundException
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '@users/entities/user.entity';
 import { Repository } from 'typeorm';
-import { RegisterUserDto } from './dto/register-user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { plainToInstance } from 'class-transformer';
+import { UsersService } from '@users/users.service';
+import { RegisterUserDto } from '@users/dto/register-user.dto';
 
 
 
@@ -16,21 +17,13 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,  // Inject UsersService để sử dụng chức năng đăng ký
   ) { }
 
-  async register(userData: RegisterUserDto) {
-    if (!userData.password) {
-      throw new UnauthorizedException('Password is required');
+    // Đăng ký (chuyển logic từ auth service sang users service)
+    async register(userData: RegisterUserDto) {
+      return this.usersService.register(userData);  // Gọi đến phương thức register trong UsersService
     }
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const user = this.userRepo.create({
-      ...userData,
-      password: hashedPassword,
-    });
-    await this.userRepo.save(user);
-    const { password, ...result } = user;
-    return result;
-  }
 
    // Kiểm tra email và password trong cơ sở dữ liệu
    async validateUser(email: string, password: string): Promise<any> {

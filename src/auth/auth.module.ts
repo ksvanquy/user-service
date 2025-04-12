@@ -16,6 +16,8 @@ import { RefreshTokenService } from './refresh-token.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
 import { RefreshTokenCleanupService } from '@refresh-token//refresh-token.cleanup.service'; // Import service dọn dẹp refresh token
+import { UsersModule } from '@users/users.module';
+
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { RefreshTokenCleanupService } from '@refresh-token//refresh-token.cleanu
       }),
       inject: [ConfigService],
     }),
+    UsersModule,
     ScheduleModule.forRoot(), // Thêm ScheduleModule vào imports để sử dụng cron job
   ],
   providers: [
@@ -36,7 +39,7 @@ import { RefreshTokenCleanupService } from '@refresh-token//refresh-token.cleanu
     LocalStrategy,
     JwtStrategy,
     RefreshTokenService,
-    RefreshTokenCleanupService, // Thêm RefreshTokenCleanupService vào providers
+    RefreshTokenCleanupService,
   ],
   controllers: [AuthController],
   exports: [AuthService, RefreshTokenService],
