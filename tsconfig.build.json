@@ -12,6 +12,7 @@
       "@refresh-token/*": ["refresh-token/*"],
       "@user-profile/*": ["user-profile/*"],             
       "@user-token/*": ["user-token/*"], 
+      "@dto/*": ["dto/*"] 
     }
   },
   "exclude": ["node_modules", "test", "dist", "**/*.spec.ts"]

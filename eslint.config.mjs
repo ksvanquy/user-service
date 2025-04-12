@@ -30,6 +30,9 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      "space-before-blocks": ["error", "always"],   // Dấu cách trước các khối lệnh như if, for, v.v.
+      "comma-spacing": ["error", { "before": false, "after": true }]  // Khoảng cách sau dấu phẩy
+
     },
   },
 );
