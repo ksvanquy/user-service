@@ -2,8 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RefreshToken } from '../entities/refresh-token.entity';
-import { User } from '../entities/user.entity';
+import { RefreshToken } from '@refresh-token/entities/refresh-token.entity';
+import { User } from '@users/entities/user.entity';
 import * as crypto from 'crypto';
 import { MoreThan } from 'typeorm'
 

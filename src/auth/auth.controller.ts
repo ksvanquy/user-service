@@ -2,7 +2,7 @@
 import { Controller, Post, Body, Request, UseGuards, Req, Headers, HttpException, HttpStatus, Get  } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { User } from '../entities/user.entity';
+import { User } from '@users/entities/user.entity';  // Sử dụng alias @entities
 import { RefreshTokenService } from './refresh-token.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RefreshTokenCleanupService } from '@refresh-token/refresh-token.cleanup.service';
