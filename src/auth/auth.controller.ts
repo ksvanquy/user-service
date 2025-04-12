@@ -7,6 +7,7 @@ import { RefreshTokenService } from './refresh-token.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { RefreshTokenCleanupService } from '@refresh-token/refresh-token.cleanup.service';
 
+
 @Controller('auth')
 export class AuthController {
   constructor(

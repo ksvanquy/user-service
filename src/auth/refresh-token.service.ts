@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-token.entity';
 import { User } from '../entities/user.entity';
 import * as crypto from 'crypto';
+import { MoreThan } from 'typeorm'
 
 @Injectable()
 export class RefreshTokenService {
@@ -14,19 +15,56 @@ export class RefreshTokenService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   // Tạo refresh token cho người dùng
+  // async createRefreshToken(
+  //   user: User,
+  //   deviceName?: string,
+  //   ipAddress?: string,
+  //   userAgent?: string,
+  // ): Promise<RefreshToken> {
+  //   const jti = crypto.randomBytes(16).toString('hex');  // Tạo id cho token
+  //   const tokenHash = crypto.createHash('sha256').update(jti).digest('hex'); // Mã hóa token
+  //   const expiresAt = new Date();
+  //   expiresAt.setDate(expiresAt.getDate() + 7); // Token hết hạn sau 7 ngày
+
+  //   const refreshToken = this.refreshTokenRepository.create({
+  //     userId: user.id,
+  //     jti,
+  //     tokenHash,
+  //     deviceName,
+  //     ipAddress,
+  //     userAgent,
+  //     expiresAt,
+  //     isRevoked: false,  // Chưa bị thu hồi
+  //   });
+
+  //   return this.refreshTokenRepository.save(refreshToken);  // Lưu vào DB
+  // }
   async createRefreshToken(
     user: User,
     deviceName?: string,
     ipAddress?: string,
     userAgent?: string,
   ): Promise<RefreshToken> {
-    const jti = crypto.randomBytes(16).toString('hex');  // Tạo id cho token
-    const tokenHash = crypto.createHash('sha256').update(jti).digest('hex'); // Mã hóa token
+    const existing = await this.refreshTokenRepository.findOne({
+      where: {
+        userId: user.id,
+        isRevoked: false,
+        expiresAt: MoreThan(new Date()),
+        userAgent: userAgent,
+      },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const jti = crypto.randomBytes(16).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Token hết hạn sau 7 ngày
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     const refreshToken = this.refreshTokenRepository.create({
       userId: user.id,
@@ -36,10 +74,10 @@ export class RefreshTokenService {
       ipAddress,
       userAgent,
       expiresAt,
-      isRevoked: false,  // Chưa bị thu hồi
+      isRevoked: false,
     });
 
-    return this.refreshTokenRepository.save(refreshToken);  // Lưu vào DB
+    return this.refreshTokenRepository.save(refreshToken);
   }
 
   // Làm mới access token từ refresh token
