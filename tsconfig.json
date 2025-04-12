@@ -20,7 +20,7 @@
       "@refresh-token/*": ["refresh-token/*"],                // ✅ alias @refresh-token -> src/refresh-token
       "@user-profile/*": ["user-profile/*"],                // ✅ alias @user-profile -> src/user-profile
       "@user-token/*": ["user-token/*"],                // ✅ alias @user-token -> src/user-token
-
+      "@dto/*": ["dto/*"] // Định nghĩa alias cho thư mục dto
     },
     "incremental": true,
     "skipLibCheck": true,

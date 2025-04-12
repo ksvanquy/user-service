@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException,ConflictException  } from '@nestjs/common';
+import { Injectable, NotFoundException,ConflictException,UnauthorizedException  } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@users/entities/user.entity';
 import { UserProfile } from '@user-profile/entities/user-profile.entity';
 import { Role } from '@roles/entities/role.entity';
 import { RegisterUserDto } from '@users/dto/register-user.dto';
+import { ChangePasswordDto } from '@users/dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -93,4 +94,31 @@ export class UsersService {
     user.roles = [...(user.roles || []), role];
     return this.userRepository.save(user);
   }
+
+  async changePassword(userId: number, changePasswordDto: ChangePasswordDto): Promise<string> {
+    
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    console.log('User found:', user);
+  
+    if (!user) {
+      throw new Error('User not found');
+    }
+  
+      // Kiểm tra mật khẩu cũ (so sánh mật khẩu đã mã hóa)
+  const isOldPasswordValid = await bcrypt.compare(changePasswordDto.oldPassword, user.password);
+
+  if (!isOldPasswordValid) {
+    throw new Error('Incorrect old password');
+  }
+
+  // Mã hóa mật khẩu mới
+  const hashedNewPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+
+  // Cập nhật mật khẩu mới cho người dùng
+  user.password = hashedNewPassword;
+  await this.userRepository.save(user);
+
+  return 'Password changed successfully';
+  }
+
 } 

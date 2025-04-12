@@ -1,3 +1,4 @@
+// src/auth/strategies/jwt.strategy.ts
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable } from '@nestjs/common';
@@ -18,8 +19,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  // async validate(payload: JwtPayload) {
+  //   await Promise.resolve(); // tránh eslint warning
+  //   return { userId: payload.sub, username: payload.username };
+  // }
+
   async validate(payload: JwtPayload) {
-    await Promise.resolve(); // tránh eslint warning
-    return { userId: payload.sub, username: payload.username };
+    console.log("JWT Payload:", payload); // Để kiểm tra payload
+    return { userId: payload.sub};
   }
 }
