@@ -17,7 +17,10 @@
       "@permissions/*": ["permissions/*"],   // ✅ alias @permissions -> src/permissions
       "@roles/*": ["roles/*"],               // ✅ alias @roles -> src/roles
       "@users/*": ["users/*"],                // ✅ alias @users -> src/users
-      "@refresh-token/*": ["refresh-token/*"]                // ✅ alias @refresh-token -> src/refresh-token
+      "@refresh-token/*": ["refresh-token/*"],                // ✅ alias @refresh-token -> src/refresh-token
+      "@user-profile/*": ["user-profile/*"],                // ✅ alias @user-profile -> src/user-profile
+      "@user-token/*": ["user-token/*"],                // ✅ alias @user-token -> src/user-token
+
     },
     "incremental": true,
     "skipLibCheck": true,
