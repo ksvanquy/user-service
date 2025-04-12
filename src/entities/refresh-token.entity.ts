@@ -1,3 +1,4 @@
+// src/entities/refresh-token.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,

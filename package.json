@@ -26,6 +26,7 @@
     "@nestjs/jwt": "11.0.0",
     "@nestjs/passport": "11.0.5",
     "@nestjs/platform-express": "11.0.13",
+    "@nestjs/schedule": "^5.0.1",
     "@nestjs/typeorm": "11.0.0",
     "@types/bcrypt": "5.0.2",
     "@types/passport-jwt": "4.0.1",
@@ -33,13 +34,14 @@
     "bcrypt": "5.1.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
+    "node-cron": "^3.0.3",
     "passport": "0.7.0",
     "passport-jwt": "4.0.1",
     "passport-local": "1.0.0",
-    "pg": "8.14.1",
+    "pg": "^8.14.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
-    "typeorm": "0.3.22"
+    "typeorm": "^0.3.22"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",

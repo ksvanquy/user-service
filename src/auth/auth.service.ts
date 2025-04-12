@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { Repository } from 'typeorm';
@@ -7,13 +7,15 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { plainToInstance } from 'class-transformer';
 
+
+
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(userData: RegisterUserDto) {
     if (!userData.password) {
@@ -29,15 +31,31 @@ export class AuthService {
     return result;
   }
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userRepo.findOne({ where: { email } });
-    if (user && await bcrypt.compare(password, user.password)) {
-      const { password, ...result } = user;
-      return result;
+   // Kiểm tra email và password trong cơ sở dữ liệu
+   async validateUser(email: string, password: string): Promise<any> {
+    if (!email || !password) {
+      throw new BadRequestException('Email và mật khẩu không được để trống');
     }
-    return null;
+
+    const user = await this.userRepo.findOne({ where: { email } });
+    
+    // Nếu người dùng không tồn tại
+    if (!user) {
+      throw new UnauthorizedException('Email không tồn tại');
+    }
+
+    // Kiểm tra mật khẩu
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Mật khẩu không đúng');
+    }
+
+    // Trả về thông tin người dùng (không bao gồm mật khẩu)
+    const { password: _, ...result } = user;
+    return result;
   }
 
+  // Đăng nhập và tạo token JWT
   async login(user: any) {
     const payload = { email: user.email, sub: user.id };
     return {

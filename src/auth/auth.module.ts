@@ -1,3 +1,5 @@
+// src/auth/auth.module.ts
+
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -9,6 +11,10 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshTokenService } from './refresh-token.service';
+
+import { ScheduleModule } from '@nestjs/schedule';
+import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
+import { RefreshTokenCleanupService } from '@refresh-token//refresh-token.cleanup.service'; // Import service dọn dẹp refresh token
 
 @Module({
   imports: [
@@ -22,8 +28,15 @@ import { RefreshTokenService } from './refresh-token.service';
       }),
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(), // Thêm ScheduleModule vào imports để sử dụng cron job
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshTokenService],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    RefreshTokenService,
+    RefreshTokenCleanupService, // Thêm RefreshTokenCleanupService vào providers
+  ],
   controllers: [AuthController],
   exports: [AuthService, RefreshTokenService],
 })
