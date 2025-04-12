@@ -9,10 +9,10 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "baseUrl": "./src",                 // ✅ trỏ vào src
     "paths": {
-      "@/*": ["src/*"],
-      "@entities/*": ["src/entities/*"]
+      "@/*": ["*"],                     // ✅ alias @ -> src
+      "@entities/*": ["entities/*"]     // ✅ alias @entities -> src/entities
     },
     "incremental": true,
     "skipLibCheck": true,
