@@ -8,6 +8,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '@users/entities/user.entity';
 import { Role } from '@roles/entities/role.entity';
+import { UserTokenService } from '@user-token/user-token.service';
+import { MailService } from '@mail/mail.service';
 import { RegisterUserDto } from '@users/dto/register-user.dto';
 import { CreateUserDto } from '@users/dto/create-user.dto';
 import { ChangePasswordDto } from '@users/dto/change-password.dto';
@@ -18,8 +20,10 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly mailService: MailService,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly userTokenService: UserTokenService,
   ) {}
 
   // Chức năng đăng ký
@@ -70,6 +74,15 @@ export class UsersService {
     });
     const savedUser = await this.userRepository.save(user);
 
+    // Tạo token xác minh email
+    const token = await this.userTokenService.createEmailVerificationToken(
+      savedUser,
+      3600,
+    );
+    console.log('Email verification token:', token);
+    // Gửi email xác minh (bạn có thể sử dụng một dịch vụ gửi email ở đây)
+    await this.mailService.sendVerifyEmail(savedUser.email, token.tokenHash);
+    // Ghi log hoặc thực hiện hành động khác nếu cần
     return savedUser;
   }
 

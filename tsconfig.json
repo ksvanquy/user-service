@@ -9,18 +9,19 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./src",                 // ✅ trỏ vào src
+    "baseUrl": "./src", // ✅ trỏ vào src
     "paths": {
-      "@/*": ["*"],                         // ✅ alias @ -> src
-      "@entities/*": ["entities/*"],         // ✅ alias @entities -> src/entities
-      "@auth/*": ["auth/*"],                 // ✅ alias @auth -> src/auth
-      "@permissions/*": ["permissions/*"],   // ✅ alias @permissions -> src/permissions
-      "@roles/*": ["roles/*"],               // ✅ alias @roles -> src/roles
-      "@users/*": ["users/*"],                // ✅ alias @users -> src/users
-      "@refresh-token/*": ["refresh-token/*"],                // ✅ alias @refresh-token -> src/refresh-token
-      "@user-profile/*": ["user-profile/*"],                // ✅ alias @user-profile -> src/user-profile
-      "@user-token/*": ["user-token/*"],                // ✅ alias @user-token -> src/user-token
-      "@dto/*": ["dto/*"] // Định nghĩa alias cho thư mục dto
+      "@/*": ["*"], // ✅ alias @ -> src
+      "@entities/*": ["entities/*"], // ✅ alias @entities -> src/entities
+      "@auth/*": ["auth/*"], // ✅ alias @auth -> src/auth
+      "@permissions/*": ["permissions/*"], // ✅ alias @permissions -> src/permissions
+      "@roles/*": ["roles/*"], // ✅ alias @roles -> src/roles
+      "@users/*": ["users/*"], // ✅ alias @users -> src/users
+      "@refresh-token/*": ["refresh-token/*"], // ✅ alias @refresh-token -> src/refresh-token
+      "@user-profile/*": ["user-profile/*"], // ✅ alias @user-profile -> src/user-profile
+      "@user-token/*": ["user-token/*"], // ✅ alias @user-token -> src/user-token
+      "@dto/*": ["dto/*"],
+      "@mail/*": ["mail/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

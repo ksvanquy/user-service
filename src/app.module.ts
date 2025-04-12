@@ -14,6 +14,7 @@ import { AuthModule } from '@auth/auth.module';
 import { UsersModule } from '@users/users.module';
 import { RolesModule } from '@roles/roles.module';
 import { PermissionsModule } from '@permissions/permissions.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { PermissionsModule } from '@permissions/permissions.module';
     UsersModule,
     RolesModule,
     PermissionsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
