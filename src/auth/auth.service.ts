@@ -19,12 +19,17 @@ import { MailService } from '@mail/mail.service';
 import { UserTokenService } from '@user-token/user-token.service';
 import { UserTokenType } from '@user-token/enums/user-token-type.enum';
 import { ConfigService } from '@nestjs/config';
+import { RefreshToken } from '@refresh-token/entities/refresh-token.entity';
+import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepo: Repository<RefreshToken>,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
@@ -42,7 +47,7 @@ export class AuthService {
 
   async register(userData: RegisterUserDto) {
     const user = await this.usersService.register(userData);
-    
+
     // Generate email verification token
     const verificationToken = await this.userTokenService.createToken(
       user.id,
@@ -56,7 +61,8 @@ export class AuthService {
     );
 
     return {
-      message: 'Registration successful. Please check your email for verification.',
+      message:
+        'Registration successful. Please check your email for verification.',
       user: {
         id: user.id,
         email: user.email,
@@ -70,7 +76,7 @@ export class AuthService {
       throw new BadRequestException('Email and password are required');
     }
 
-    const user = await this.userRepo.findOne({ 
+    const user = await this.userRepo.findOne({
       where: { email },
       relations: ['roles', 'roles.permissions'],
     });
@@ -94,34 +100,111 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
-    
+
     const payload = {
       sub: user.id,
       email: user.email,
-      roles: user.roles.map(role => role.name),
-      permissions: user.roles.flatMap(role => 
-        role.permissions.map(permission => permission.name)
+      roles: user.roles.map((role) => role.name),
+      permissions: user.roles.flatMap((role) =>
+        role.permissions.map((permission) => permission.name),
       ),
     };
 
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '15m', // Access token expires in 15 minutes
+    });
+
+    const refreshToken = await this.createRefreshToken(user.id);
+
     return {
-      access_token: this.jwtService.sign(payload, {
-        expiresIn: '15m', // Access token expires in 15 minutes
-      }),
+      access_token: accessToken,
+      refresh_token: refreshToken.jti,
       user: {
         id: user.id,
         email: user.email,
         username: user.username,
-        roles: user.roles.map(role => role.name),
+        roles: user.roles.map((role) => role.name),
       },
     };
+  }
+
+  private async createRefreshToken(userId: number): Promise<RefreshToken> {
+    const jti = uuidv4();
+    const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Refresh token expires in 7 days
+
+    const refreshToken = this.refreshTokenRepo.create({
+      userId,
+      jti,
+      tokenHash,
+      expiresAt,
+      isRevoked: false,
+    });
+
+    return this.refreshTokenRepo.save(refreshToken);
+  }
+
+  async refreshTokens(refreshTokenString: string) {
+    const refreshToken = await this.refreshTokenRepo.findOne({
+      where: { jti: refreshTokenString },
+      relations: ['user', 'user.roles', 'user.roles.permissions'],
+    });
+
+    if (!refreshToken || refreshToken.isRevoked || refreshToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const payload = {
+      sub: refreshToken.user.id,
+      email: refreshToken.user.email,
+      roles: refreshToken.user.roles.map((role) => role.name),
+      permissions: refreshToken.user.roles.flatMap((role) =>
+        role.permissions.map((permission) => permission.name),
+      ),
+    };
+
+    // Revoke the old refresh token
+    refreshToken.isRevoked = true;
+    await this.refreshTokenRepo.save(refreshToken);
+
+    // Create new tokens
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    const newRefreshToken = await this.createRefreshToken(refreshToken.user.id);
+
+    return {
+      access_token: accessToken,
+      refresh_token: newRefreshToken.jti,
+    };
+  }
+
+  async revokeRefreshToken(userId: number, refreshTokenString: string) {
+    const refreshToken = await this.refreshTokenRepo.findOne({
+      where: { userId, jti: refreshTokenString },
+    });
+
+    if (refreshToken) {
+      refreshToken.isRevoked = true;
+      await this.refreshTokenRepo.save(refreshToken);
+    }
+  }
+
+  async logout(userId: number, refreshTokenString: string) {
+    await this.revokeRefreshToken(userId, refreshTokenString);
+    return { message: 'Logged out successfully' };
   }
 
   async requestPasswordReset(dto: RequestPasswordResetDto) {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) {
       // Return success even if user doesn't exist to prevent email enumeration
-      return { message: 'If your email is registered, you will receive a password reset link.' };
+      return {
+        message:
+          'If your email is registered, you will receive a password reset link.',
+      };
     }
 
     const resetToken = await this.userTokenService.createToken(
@@ -129,12 +212,12 @@ export class AuthService {
       UserTokenType.PASSWORD_RESET,
     );
 
-    await this.mailService.sendPasswordResetEmail(
-      user.email,
-      resetToken.token,
-    );
+    await this.mailService.sendPasswordResetEmail(user.email, resetToken.token);
 
-    return { message: 'If your email is registered, you will receive a password reset link.' };
+    return {
+      message:
+        'If your email is registered, you will receive a password reset link.',
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
@@ -176,7 +259,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired verification token');
     }
 
-    const user = await this.userRepo.findOne({ where: { id: verificationToken.userId } });
+    const user = await this.userRepo.findOne({
+      where: { id: verificationToken.userId },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

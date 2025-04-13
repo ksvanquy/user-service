@@ -33,6 +33,9 @@ export class UserProfile {
   @Column({ nullable: true })
   website: string;
 
+  @Column({ default: false })
+  isPhoneVerified: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

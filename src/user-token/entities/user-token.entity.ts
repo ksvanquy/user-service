@@ -15,29 +15,30 @@ export class UserToken {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId: number;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, (user) => user.tokens)
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
-  token: string;
+  @Column({ name: 'token_hash', unique: true })
+  tokenHash: string;
 
   @Column({
     type: 'enum',
     enum: UserTokenType,
+    name: 'type'
   })
   type: UserTokenType;
 
   @Column({ default: false })
   isRevoked: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @Column()
+  @Column({ name: 'expires_at', type: 'timestamptz' })
   expiresAt: Date;
 
   @Column({ nullable: true })

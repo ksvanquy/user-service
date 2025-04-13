@@ -16,6 +16,8 @@ import { RolesModule } from '@roles/roles.module';
 import { PermissionsModule } from '@permissions/permissions.module';
 import { MailModule } from './mail/mail.module';
 import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
+import { UserProfileModule } from '@user-profile/user-profile.module';
+import { UserTokenModule } from '@user-token/user-token.module';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
       database: process.env.DB_DATABASE || 'user_service_db',
       entities: [User, UserProfile, Role, Permission, RefreshToken, UserToken],
       synchronize: process.env.NODE_ENV !== 'production', // Disable in production
+      autoLoadEntities: true,
     }),
     TypeOrmModule.forFeature([
       User,
@@ -46,6 +49,8 @@ import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
     PermissionsModule,
     MailModule,
     RefreshTokenModule,
+    UserProfileModule,
+    UserTokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],

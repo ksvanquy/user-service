@@ -84,20 +84,28 @@ export class RefreshTokenService {
   async refreshAccessToken(tokenHash: string): Promise<{ access_token: string }> {
     const token = await this.refreshTokenRepository.findOne({
       where: { tokenHash },
-      relations: ['user'],
+      relations: ['user', 'user.roles', 'user.roles.permissions'],
     });
 
     if (!token) {
-      throw new UnauthorizedException('Invalid refresh token');  // Nếu không tìm thấy token
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (token.isRevoked || token.expiresAt < new Date()) {
-      throw new UnauthorizedException('Refresh token expired or revoked');  // Nếu token đã hết hạn hoặc bị thu hồi
+      throw new UnauthorizedException('Refresh token expired or revoked');
     }
 
-    const payload = { email: token.user.email, sub: token.user.id };  // Payload cho access token mới
+    const payload = { 
+      sub: token.user.id, 
+      email: token.user.email,
+      roles: token.user.roles.map(role => role.name),
+      permissions: token.user.roles.flatMap(role => 
+        role.permissions.map(permission => permission.name)
+      ),
+    };
+    
     return {
-      access_token: this.jwtService.sign(payload),  // Tạo access token mới
+      access_token: this.jwtService.sign(payload),
     };
   }
 
@@ -108,12 +116,12 @@ export class RefreshTokenService {
     });
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Invalid refresh token');  // Nếu không tìm thấy refresh token
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
-    refreshToken.isRevoked = true;  // Đánh dấu token là đã bị thu hồi
-    refreshToken.revokedAt = new Date();  // Ghi lại thời gian thu hồi
-    await this.refreshTokenRepository.save(refreshToken);  // Lưu thay đổi vào DB
+    refreshToken.isRevoked = true;
+    refreshToken.revokedAt = new Date();
+    await this.refreshTokenRepository.save(refreshToken);
   }
   // Xóa refresh token đã thu hồi
   async cleanRevokedTokens(): Promise<number> {

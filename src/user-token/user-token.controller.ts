@@ -1,16 +1,31 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Delete } from '@nestjs/common';
+import { UserTokenService } from './user-token.service';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@auth/guards/roles.guard';
+import { Roles } from '@auth/decorators/roles.decorator';
+import { UserTokenType } from './enums/user-token-type.enum';
 
 @Controller('user-token')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
 export class UserTokenController {
-  @Get(':id')
-  getUserToken(@Param('id') id: string) {
-    // Logic to retrieve a user token by ID
-    return { id, token: 'sample-token' };
+  constructor(private readonly userTokenService: UserTokenService) {}
+
+  @Get('cleanup')
+  async cleanupExpiredTokens() {
+    const count = await this.userTokenService.cleanupExpiredTokens();
+    return { message: `Cleaned up ${count} expired tokens` };
   }
 
-  @Post()
-  createUserToken(@Body() createTokenDto: { userId: string }) {
-    // Logic to create a new user token
-    return { userId: createTokenDto.userId, token: 'new-sample-token' };
+  @Post('revoke/:userId')
+  async revokeAllUserTokens(@Param('userId') userId: string) {
+    await this.userTokenService.revokeAllUserTokens(+userId);
+    return { message: 'All tokens revoked successfully' };
+  }
+
+  @Delete(':token')
+  async deleteToken(@Param('token') token: string) {
+    await this.userTokenService.deleteToken(token);
+    return { message: 'Token deleted successfully' };
   }
 }
