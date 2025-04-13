@@ -5,6 +5,7 @@ import { UserToken } from '@user-token/entities/user-token.entity';
 import { UserTokenType } from '@user-token/enums/user-token-type.enum';
 import { User } from '@users/entities/user.entity';
 import * as crypto from 'crypto';
+import { HashUtil } from '../common/utils/hash.util';
 
 @Injectable()
 export class UserTokenService {
@@ -17,42 +18,46 @@ export class UserTokenService {
     userId: number,
     type: UserTokenType,
     expiresInHours: number = 24,
-  ): Promise<UserToken> {
+  ): Promise<{ token: string; userToken: UserToken }> {
     const token = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const tokenHash = await HashUtil.hash(token);
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + expiresInHours);
 
     const userToken = this.userTokenRepository.create({
       userId,
-      token,
       tokenHash,
       type,
       expiresAt,
       isRevoked: false,
     });
 
-    return this.userTokenRepository.save(userToken);
+    const savedUserToken = await this.userTokenRepository.save(userToken);
+    return { token, userToken: savedUserToken };
   }
 
   async validateToken(
     token: string,
     type: UserTokenType,
   ): Promise<UserToken | null> {
-    const userToken = await this.userTokenRepository.findOne({
+    // Find all non-revoked tokens of the specified type that haven't expired
+    const userTokens = await this.userTokenRepository.find({
       where: {
-        token,
         type,
         isRevoked: false,
         expiresAt: MoreThan(new Date()),
       },
     });
 
-    if (!userToken) {
-      return null;
+    // Check each token hash
+    for (const userToken of userTokens) {
+      const isValid = await HashUtil.compare(token, userToken.tokenHash);
+      if (isValid) {
+        return userToken;
+      }
     }
 
-    return userToken;
+    return null;
   }
 
   async revokeToken(tokenId: number): Promise<void> {
@@ -84,14 +89,27 @@ export class UserTokenService {
   }
 
   async findByToken(token: string): Promise<UserToken | null> {
-    return this.userTokenRepository.findOne({
-      where: { token },
+    // Find all tokens with relations
+    const userTokens = await this.userTokenRepository.find({
       relations: ['user'],
     });
+
+    // Check each token hash
+    for (const userToken of userTokens) {
+      const isValid = await HashUtil.compare(token, userToken.tokenHash);
+      if (isValid) {
+        return userToken;
+      }
+    }
+
+    return null;
   }
 
   async deleteToken(token: string): Promise<void> {
-    await this.userTokenRepository.delete({ token });
+    const userToken = await this.findByToken(token);
+    if (userToken) {
+      await this.userTokenRepository.delete(userToken.id);
+    }
   }
 
   async deleteExpiredTokens(): Promise<void> {
@@ -103,14 +121,14 @@ export class UserTokenService {
   async createEmailVerificationToken(
     user: User,
     expiresIn: number,
-  ): Promise<UserToken> {
+  ): Promise<{ token: string; userToken: UserToken }> {
     return this.createToken(user.id, UserTokenType.EMAIL_VERIFICATION, expiresIn);
   }
 
   async createPasswordResetToken(
     user: User,
     expiresIn: number,
-  ): Promise<UserToken> {
+  ): Promise<{ token: string; userToken: UserToken }> {
     return this.createToken(user.id, UserTokenType.PASSWORD_RESET, expiresIn);
   }
 

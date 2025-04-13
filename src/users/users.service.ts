@@ -13,7 +13,7 @@ import { MailService } from '@mail/mail.service';
 import { RegisterUserDto } from '@users/dto/register-user.dto';
 import { CreateUserDto } from '@users/dto/create-user.dto';
 import { ChangePasswordDto } from '@users/dto/change-password.dto';
-import * as bcrypt from 'bcrypt';
+import { HashUtil } from '../common/utils/hash.util';
 
 @Injectable()
 export class UsersService {
@@ -41,7 +41,7 @@ export class UsersService {
     }
 
     // Mã hóa mật khẩu
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const hashedPassword = await HashUtil.hash(userData.password);
 
     // Tạo người dùng mới
     const user = this.userRepository.create({
@@ -70,7 +70,7 @@ export class UsersService {
     if (userWithEmail) {
       throw new ConflictException('Email is already taken');
     }
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    const hashedPassword = await HashUtil.hash(createUserDto.password);
     const user = this.userRepository.create({
       ...createUserDto,
       password: hashedPassword,
@@ -78,13 +78,13 @@ export class UsersService {
     const savedUser = await this.userRepository.save(user);
 
     // Tạo token xác minh email
-    const token = await this.userTokenService.createEmailVerificationToken(
+    const { token } = await this.userTokenService.createEmailVerificationToken(
       savedUser,
       3600,
     );
     console.log('Email verification token:', token);
     // Gửi email xác minh (bạn có thể sử dụng một dịch vụ gửi email ở đây)
-    await this.mailService.sendEmailVerification(savedUser.email, token.token);
+    await this.mailService.sendEmailVerification(savedUser.email, token);
     // Ghi log hoặc thực hiện hành động khác nếu cần
     return savedUser;
   }
@@ -96,7 +96,7 @@ export class UsersService {
     }
     // Hash password nếu có
     if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+      updateUserDto.password = await HashUtil.hash(updateUserDto.password);
     }
 
     // Gộp thông tin cũ với thông tin mới
@@ -119,12 +119,12 @@ export class UsersService {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    const isMatch = await bcrypt.compare(dto.oldPassword, user.password);
+    const isMatch = await HashUtil.compare(dto.oldPassword, user.password);
     if (!isMatch) {
       throw new UnauthorizedException('Old password is incorrect');
     }
 
-    user.password = await bcrypt.hash(dto.newPassword, 10);
+    user.password = await HashUtil.hash(dto.newPassword);
     await this.userRepository.save(user);
 
     return 'Password changed successfully';

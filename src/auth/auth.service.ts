@@ -8,7 +8,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '@users/entities/user.entity';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '@users/users.service';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -21,7 +20,7 @@ import { UserTokenType } from '@user-token/enums/user-token-type.enum';
 import { ConfigService } from '@nestjs/config';
 import { RefreshToken } from '@refresh-token/entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
-import * as crypto from 'crypto';
+import { HashUtil } from '../common/utils/hash.util';
 
 @Injectable()
 export class AuthService {
@@ -49,7 +48,7 @@ export class AuthService {
     const user = await this.usersService.register(userData);
 
     // Generate email verification token
-    const verificationToken = await this.userTokenService.createToken(
+    const { token } = await this.userTokenService.createToken(
       user.id,
       UserTokenType.EMAIL_VERIFICATION,
     );
@@ -57,7 +56,7 @@ export class AuthService {
     // Send verification email
     await this.mailService.sendEmailVerification(
       user.email,
-      verificationToken.token,
+      token,
     );
 
     return {
@@ -85,7 +84,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await HashUtil.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -130,7 +129,7 @@ export class AuthService {
 
   private async createRefreshToken(userId: number): Promise<RefreshToken> {
     const jti = uuidv4();
-    const tokenHash = crypto.createHash('sha256').update(jti).digest('hex');
+    const tokenHash = await HashUtil.hash(jti);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // Refresh token expires in 7 days
 
@@ -207,12 +206,12 @@ export class AuthService {
       };
     }
 
-    const resetToken = await this.userTokenService.createToken(
+    const { token } = await this.userTokenService.createToken(
       user.id,
       UserTokenType.PASSWORD_RESET,
     );
 
-    await this.mailService.sendPasswordResetEmail(user.email, resetToken.token);
+    await this.mailService.sendPasswordResetEmail(user.email, token);
 
     return {
       message:
@@ -236,7 +235,7 @@ export class AuthService {
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    const hashedPassword = await HashUtil.hash(dto.newPassword);
     user.password = hashedPassword;
     await this.userRepo.save(user);
 

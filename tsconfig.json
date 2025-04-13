@@ -21,7 +21,8 @@
       "@user-profile/*": ["user-profile/*"], // ✅ alias @user-profile -> src/user-profile
       "@user-token/*": ["user-token/*"], // ✅ alias @user-token -> src/user-token
       "@dto/*": ["dto/*"],
-      "@mail/*": ["mail/*"]
+      "@mail/*": ["mail/*"],
+      "@common/*": ["common/*"] // ✅ alias @common -> src/common
     },
     "incremental": true,
     "skipLibCheck": true,
