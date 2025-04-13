@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { RefreshToken } from '@refresh-token/entities/refresh-token.entity';
 import { User } from '@users/entities/user.entity';
 import * as crypto from 'crypto';
-import { MoreThan } from 'typeorm'
+import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class RefreshTokenService {
@@ -15,7 +15,7 @@ export class RefreshTokenService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   // Tạo refresh token cho người dùng
   // async createRefreshToken(
@@ -81,7 +81,9 @@ export class RefreshTokenService {
   }
 
   // Làm mới access token từ refresh token
-  async refreshAccessToken(tokenHash: string): Promise<{ access_token: string }> {
+  async refreshAccessToken(
+    tokenHash: string,
+  ): Promise<{ access_token: string }> {
     const token = await this.refreshTokenRepository.findOne({
       where: { tokenHash },
       relations: ['user', 'user.roles', 'user.roles.permissions'],
@@ -95,22 +97,24 @@ export class RefreshTokenService {
       throw new UnauthorizedException('Refresh token expired or revoked');
     }
 
-    const payload = { 
-      sub: token.user.id, 
+    const payload = {
+      sub: token.user.id,
       email: token.user.email,
-      roles: token.user.roles.map(role => role.name),
-      permissions: token.user.roles.flatMap(role => 
-        role.permissions.map(permission => permission.name)
+      roles: token.user.roles.map((role) => role.name),
+      permissions: token.user.roles.flatMap((role) =>
+        role.permissions.map((permission) => permission.name),
       ),
     };
-    
+
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
   // Thu hồi refresh token
-  async revokeRefreshToken(tokenHash: string): Promise<void> {
+  async revokeRefreshToken(token: string): Promise<void> {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
     const refreshToken = await this.refreshTokenRepository.findOne({
       where: { tokenHash },
     });
@@ -125,7 +129,9 @@ export class RefreshTokenService {
   }
   // Xóa refresh token đã thu hồi
   async cleanRevokedTokens(): Promise<number> {
-    const result = await this.refreshTokenRepository.delete({ isRevoked: true });
+    const result = await this.refreshTokenRepository.delete({
+      isRevoked: true,
+    });
     return result.affected ?? 0;
   }
 }
