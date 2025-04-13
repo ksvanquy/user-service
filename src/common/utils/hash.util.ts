@@ -21,4 +21,4 @@ export class HashUtil {
   static async compare(data: string, hash: string): Promise<boolean> {
     return bcrypt.compare(data, hash);
   }
-} 
+}

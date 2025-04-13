@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Permission } from '@permissions/entities/permission.entity';  
+import { Permission } from '@permissions/entities/permission.entity';
 import { PermissionsService } from './permissions.service';
 import { PermissionsController } from './permissions.controller';
 
@@ -10,4 +10,4 @@ import { PermissionsController } from './permissions.controller';
   controllers: [PermissionsController],
   exports: [PermissionsService],
 })
-export class PermissionsModule {} 
+export class PermissionsModule {}

@@ -19,5 +19,6 @@ module.exports = {
     '^@user-token/(.*)$': '<rootDir>/src/user-token/$1',
     '^@dto/(.*)$': '<rootDir>/src/dto/$1',
     '^@mail/(.*)$': '<rootDir>/src/mail/$1',
+    '@common/(.*)$': '<rootDir>/src/common/$1',
   },
-}; 
+};

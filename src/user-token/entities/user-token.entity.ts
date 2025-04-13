@@ -28,7 +28,7 @@ export class UserToken {
   @Column({
     type: 'enum',
     enum: UserTokenType,
-    name: 'type'
+    name: 'type',
   })
   type: UserTokenType;
 

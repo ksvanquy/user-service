@@ -18,6 +18,8 @@ import { MailModule } from './mail/mail.module';
 import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
 import { UserProfileModule } from '@user-profile/user-profile.module';
 import { UserTokenModule } from '@user-token/user-token.module';
+import { GoogleStrategy } from '@auth/strategies/google.strategy';
+import { FacebookStrategy } from '@auth/strategies/facebook.strategy';
 
 @Module({
   imports: [
@@ -53,6 +55,6 @@ import { UserTokenModule } from '@user-token/user-token.module';
     UserTokenModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, GoogleStrategy, FacebookStrategy],
 })
 export class AppModule {}

@@ -20,7 +20,7 @@ export class MailService {
 
   async sendEmailVerification(email: string, token: string): Promise<void> {
     const verificationUrl = `${this.configService.get('FRONTEND_URL')}/verify-email?token=${token}`;
-    
+
     await this.transporter.sendMail({
       to: email,
       subject: 'Verify your email',
@@ -35,7 +35,7 @@ export class MailService {
 
   async sendPasswordResetEmail(email: string, token: string): Promise<void> {
     const resetUrl = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
-    
+
     await this.transporter.sendMail({
       to: email,
       subject: 'Reset your password',

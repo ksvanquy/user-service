@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Permission } from '@permissions/entities/permission.entity';  
+import { Permission } from '@permissions/entities/permission.entity';
 
 @Injectable()
 export class PermissionsService {
@@ -29,7 +29,10 @@ export class PermissionsService {
     return this.permissionRepository.save(permission);
   }
 
-  async update(id: number, permissionData: Partial<Permission>): Promise<Permission> {
+  async update(
+    id: number,
+    permissionData: Partial<Permission>,
+  ): Promise<Permission> {
     const permission = await this.findOne(id);
     Object.assign(permission, permissionData);
     return this.permissionRepository.save(permission);
@@ -39,4 +42,4 @@ export class PermissionsService {
     const permission = await this.findOne(id);
     await this.permissionRepository.remove(permission);
   }
-} 
+}

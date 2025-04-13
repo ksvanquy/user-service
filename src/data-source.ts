@@ -21,4 +21,4 @@ export const AppDataSource = new DataSource({
   entities: [User, UserProfile, RefreshToken, Role, Permission, UserToken],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],
-}); 
+});

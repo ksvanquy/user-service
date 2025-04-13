@@ -1,6 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { RolesService } from './roles.service';
-import { Role } from '@roles/entities/role.entity';  
+import { Role } from '@roles/entities/role.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -37,7 +46,10 @@ export class RolesController {
   }
 
   @Post(':id/permissions/:permissionId')
-  assignPermission(@Param('id') id: string, @Param('permissionId') permissionId: string) {
+  assignPermission(
+    @Param('id') id: string,
+    @Param('permissionId') permissionId: string,
+  ) {
     return this.rolesService.assignPermission(+id, +permissionId);
   }
-} 
+}

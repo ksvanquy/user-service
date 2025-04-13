@@ -37,4 +37,4 @@ export class UserProfileController {
   verifyPhone(@Request() req) {
     return this.userProfileService.verifyPhone(req.user.id);
   }
-} 
+}

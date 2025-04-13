@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Role } from '@roles/entities/role.entity';  
-import { Permission } from '@permissions/entities/permission.entity';  
+import { Role } from '@roles/entities/role.entity';
+import { Permission } from '@permissions/entities/permission.entity';
 
 @Injectable()
 export class RolesService {
@@ -48,11 +48,15 @@ export class RolesService {
 
   async assignPermission(roleId: number, permissionId: number): Promise<Role> {
     const role = await this.findOne(roleId);
-    const permission = await this.permissionRepository.findOne({ where: { id: permissionId } });
+    const permission = await this.permissionRepository.findOne({
+      where: { id: permissionId },
+    });
     if (!permission) {
-      throw new NotFoundException(`Permission with ID ${permissionId} not found`);
+      throw new NotFoundException(
+        `Permission with ID ${permissionId} not found`,
+      );
     }
     role.permissions = [...(role.permissions || []), permission];
     return this.roleRepository.save(role);
   }
-} 
+}

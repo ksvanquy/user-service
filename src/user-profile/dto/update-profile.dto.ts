@@ -40,4 +40,4 @@ export class UpdateProfileDto {
   @IsBoolean()
   @IsOptional()
   isPhoneVerified?: boolean;
-} 
+}

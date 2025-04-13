@@ -34,7 +34,10 @@ export class UserProfileService {
     }
   }
 
-  async update(userId: number, updateProfileDto: UpdateProfileDto): Promise<UserProfile> {
+  async update(
+    userId: number,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<UserProfile> {
     const profile = await this.findOne(userId);
     Object.assign(profile, updateProfileDto);
     return this.userProfileRepository.save(profile);
@@ -45,4 +48,4 @@ export class UserProfileService {
     profile.isPhoneVerified = true;
     return this.userProfileRepository.save(profile);
   }
-} 
+}

@@ -21,6 +21,8 @@ import { ConfigService } from '@nestjs/config';
 import { RefreshToken } from '@refresh-token/entities/refresh-token.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { HashUtil } from '../common/utils/hash.util';
+import { UserProfile } from '@user-profile/entities/user-profile.entity';
+import { Role } from '@roles/entities/role.entity';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +31,10 @@ export class AuthService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepo: Repository<RefreshToken>,
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepo: Repository<UserProfile>,
+    @InjectRepository(Role)
+    private readonly roleRepo: Repository<Role>,
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
@@ -54,10 +60,7 @@ export class AuthService {
     );
 
     // Send verification email
-    await this.mailService.sendEmailVerification(
-      user.email,
-      token,
-    );
+    await this.mailService.sendEmailVerification(user.email, token);
 
     return {
       message:
@@ -150,7 +153,11 @@ export class AuthService {
       relations: ['user', 'user.roles', 'user.roles.permissions'],
     });
 
-    if (!refreshToken || refreshToken.isRevoked || refreshToken.expiresAt < new Date()) {
+    if (
+      !refreshToken ||
+      refreshToken.isRevoked ||
+      refreshToken.expiresAt < new Date()
+    ) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
@@ -272,5 +279,70 @@ export class AuthService {
     await this.userTokenService.revokeToken(verificationToken.id);
 
     return { message: 'Email verified successfully' };
+  }
+
+  async oauthLogin(user: any) {
+    try {
+      // Check if user exists
+      let existingUser = await this.userRepo.findOne({
+        where: { email: user.email },
+        relations: ['roles'],
+      });
+
+      if (!existingUser) {
+        // Create new user
+        existingUser = this.userRepo.create({
+          email: user.email,
+          username: user.email.split('@')[0], // Use email prefix as username
+          password: await HashUtil.hash(uuidv4()), // Generate random password
+          emailVerified: true,
+          isActive: true,
+          provider: user.provider,
+        });
+
+        // Save the user first to get the ID
+        existingUser = await this.userRepo.save(existingUser);
+
+        // Create user profile
+        const userProfile = this.userProfileRepo.create({
+          userId: existingUser.id,
+          fullName: user.name,
+          avatarUrl: user.picture,
+        });
+        await this.userProfileRepo.save(userProfile);
+
+        // Assign default role if needed
+        const defaultRole = await this.roleRepo.findOne({
+          where: { name: 'user' },
+        });
+        if (defaultRole) {
+          existingUser.roles = [defaultRole];
+          await this.userRepo.save(existingUser);
+        }
+      }
+
+      // Generate tokens
+      const payload = {
+        sub: existingUser.id,
+        email: existingUser.email,
+        roles: existingUser.roles?.map((role) => role.name) || [],
+      };
+
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+      const refreshToken = await this.createRefreshToken(existingUser.id);
+
+      return {
+        access_token: accessToken,
+        refresh_token: refreshToken.jti,
+        user: {
+          id: existingUser.id,
+          email: existingUser.email,
+          username: existingUser.username,
+          roles: existingUser.roles?.map((role) => role.name) || [],
+        },
+      };
+    } catch (error) {
+      throw new UnauthorizedException('OAuth authentication failed: ' + error.message);
+    }
   }
 }

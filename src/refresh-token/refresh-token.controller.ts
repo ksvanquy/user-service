@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { RefreshTokenService } from './refresh-token.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -10,7 +18,9 @@ export class RefreshTokenController {
   @Post('refresh')
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     try {
-      return await this.refreshTokenService.refreshAccessToken(refreshTokenDto.refreshToken);
+      return await this.refreshTokenService.refreshAccessToken(
+        refreshTokenDto.refreshToken,
+      );
     } catch (error) {
       throw new HttpException(
         'Invalid refresh token: ' + error.message,
@@ -23,7 +33,9 @@ export class RefreshTokenController {
   @UseGuards(JwtAuthGuard)
   async revokeToken(@Body() refreshTokenDto: RefreshTokenDto) {
     try {
-      await this.refreshTokenService.revokeRefreshToken(refreshTokenDto.refreshToken);
+      await this.refreshTokenService.revokeRefreshToken(
+        refreshTokenDto.refreshToken,
+      );
       return { message: 'Token revoked successfully' };
     } catch (error) {
       throw new HttpException(

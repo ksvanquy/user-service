@@ -122,7 +122,11 @@ export class UserTokenService {
     user: User,
     expiresIn: number,
   ): Promise<{ token: string; userToken: UserToken }> {
-    return this.createToken(user.id, UserTokenType.EMAIL_VERIFICATION, expiresIn);
+    return this.createToken(
+      user.id,
+      UserTokenType.EMAIL_VERIFICATION,
+      expiresIn,
+    );
   }
 
   async createPasswordResetToken(

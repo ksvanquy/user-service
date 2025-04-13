@@ -37,6 +37,9 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true })
   lastLoginAt: Date;
 
+  @Column({ nullable: true })
+  provider: string;
+
   // @CreateDateColumn({ type: 'timestamptz' })
   // createdAt: Date;
 
