@@ -19,12 +19,14 @@ export class UserTokenService {
     expiresInHours: number = 24,
   ): Promise<UserToken> {
     const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + expiresInHours);
 
     const userToken = this.userTokenRepository.create({
       userId,
       token,
+      tokenHash,
       type,
       expiresAt,
       isRevoked: false,

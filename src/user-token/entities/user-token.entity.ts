@@ -25,6 +25,9 @@ export class UserToken {
   @Column({ name: 'token_hash', unique: true })
   tokenHash: string;
 
+  @Column({ unique: true })
+  token: string;
+
   @Column({
     type: 'enum',
     enum: UserTokenType,
