@@ -84,7 +84,7 @@ export class UsersService {
     );
     console.log('Email verification token:', token);
     // Gửi email xác minh (bạn có thể sử dụng một dịch vụ gửi email ở đây)
-    await this.mailService.sendVerifyEmail(savedUser.email, token.tokenHash);
+    await this.mailService.sendEmailVerification(savedUser.email, token.token);
     // Ghi log hoặc thực hiện hành động khác nếu cần
     return savedUser;
   }

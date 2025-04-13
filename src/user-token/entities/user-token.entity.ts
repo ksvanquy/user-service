@@ -8,11 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '@users/entities/user.entity';
-
-export enum UserTokenType {
-  EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
-  PASSWORD_RESET = 'PASSWORD_RESET',
-}
+import { UserTokenType } from '../enums/user-token-type.enum';
 
 @Entity('user_tokens')
 export class UserToken {
@@ -22,22 +18,28 @@ export class UserToken {
   @Column()
   userId: number;
 
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column()
+  token: string;
+
   @Column({
     type: 'enum',
     enum: UserTokenType,
   })
   type: UserTokenType;
 
-  @Column({ unique: true })
-  tokenHash: string;
+  @Column({ default: false })
+  isRevoked: boolean;
 
-  @Column({ type: 'timestamptz' })
-  expiresAt: Date;
-
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.tokens)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @Column()
+  expiresAt: Date;
+
+  @Column({ nullable: true })
+  revokedAt: Date;
 }

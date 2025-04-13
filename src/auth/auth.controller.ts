@@ -5,69 +5,71 @@ import {
   Body,
   Request,
   UseGuards,
-  Req,
-  Headers,
   HttpException,
   HttpStatus,
   Get,
+  Headers,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { User } from '@users/entities/user.entity'; // Sử dụng alias @entities
-import { RefreshTokenService } from '../refresh-token/refresh-token.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RefreshTokenService } from '@refresh-token/refresh-token.service';
 import { RefreshTokenCleanupService } from '@refresh-token/refresh-token.cleanup.service';
+import { User } from '@users/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly refreshTokenService: RefreshTokenService,
-    private readonly refreshTokenCleanupService: RefreshTokenCleanupService, // Inject RefreshTokenCleanupService
+    private readonly refreshTokenCleanupService: RefreshTokenCleanupService,
   ) {}
 
-  // Endpoint thử nghiệm để gọi hàm dọn dẹp thủ công
-  @Get('clean-refresh-tokens')
-  async cleanExpiredTokens() {
-    return await this.refreshTokenCleanupService.cleanupExpiredTokens(); // Sửa tên phương thức ở đây
+  @Post('register')
+  async register(@Body() userData: RegisterUserDto) {
+    try {
+      return await this.authService.register(userData);
+    } catch (error) {
+      throw new HttpException(
+        'Registration failed: ' + error.message,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(
-    @Request() req,
+    @Body() loginDto: LoginDto,
     @Headers('user-agent') userAgent?: string,
     @Req() request?: any,
   ) {
     try {
-      const result = await this.authService.login(req.user); // Lấy JWT từ AuthService
+      const result = await this.authService.login(loginDto);
+      
+      // Get the full user entity for the refresh token service
+      const user = await this.authService.getUserById(result.user.id);
+      
       const refreshToken = await this.refreshTokenService.createRefreshToken(
-        req.user,
+        user,
         undefined,
         request?.ip,
         userAgent,
       );
 
       return {
-        access_token: result.access_token, // Trả về JWT Access Token
-        refresh_token: refreshToken.jti, // Trả về Refresh Token
+        ...result,
+        refresh_token: refreshToken.jti,
       };
     } catch (error) {
       throw new HttpException(
         'Login failed: ' + error.message,
         HttpStatus.UNAUTHORIZED,
-      );
-    }
-  }
-
-  @Post('register')
-  async register(@Body() userData: RegisterUserDto) {
-    try {
-      return await this.authService.register(userData); // Đăng ký người dùng mới
-    } catch (error) {
-      throw new HttpException(
-        'Registration failed: ' + error.message,
-        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -82,7 +84,7 @@ export class AuthController {
     }
 
     try {
-      return await this.refreshTokenService.refreshAccessToken(refreshToken); // Lấy Access Token mới từ Refresh Token
+      return await this.refreshTokenService.refreshAccessToken(refreshToken);
     } catch (error) {
       throw new HttpException(
         'Refresh token invalid or expired: ' + error.message,
@@ -92,6 +94,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(JwtAuthGuard)
   async logout(@Body('refresh_token') refreshToken: string) {
     if (!refreshToken) {
       throw new HttpException(
@@ -101,7 +104,7 @@ export class AuthController {
     }
 
     try {
-      await this.refreshTokenService.revokeRefreshToken(refreshToken); // Hủy refresh token
+      await this.refreshTokenService.revokeRefreshToken(refreshToken);
       return { message: 'Logged out successfully' };
     } catch (error) {
       throw new HttpException(
@@ -109,5 +112,47 @@ export class AuthController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Post('password-reset/request')
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
+    try {
+      return await this.authService.requestPasswordReset(dto);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to request password reset: ' + error.message,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('password-reset/reset')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    try {
+      return await this.authService.resetPassword(dto);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to reset password: ' + error.message,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body('token') token: string) {
+    try {
+      return await this.authService.verifyEmail(token);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to verify email: ' + error.message,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('clean-refresh-tokens')
+  @UseGuards(JwtAuthGuard)
+  async cleanExpiredTokens() {
+    return await this.refreshTokenCleanupService.cleanupExpiredTokens();
   }
 }

@@ -17,6 +17,6 @@ import { JwtModule } from '@nestjs/jwt';
   ],
   controllers: [RefreshTokenController],
   providers: [RefreshTokenService, RefreshTokenCleanupService],
-  exports: [RefreshTokenService],
+  exports: [RefreshTokenService, RefreshTokenCleanupService],
 })
 export class RefreshTokenModule {}

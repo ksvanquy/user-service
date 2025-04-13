@@ -1,19 +1,51 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      host: 'in-v3.mailjet.com',
-      port: 587,
-      secure: false,
+      host: this.configService.get('MAIL_HOST'),
+      port: this.configService.get('MAIL_PORT'),
+      secure: this.configService.get('MAIL_SECURE') === 'true',
       auth: {
-        user: '3c67ff416b5e35ad11132439f77c3242', // API Key của bạn
-        pass: 'f22100f8757f16cc739a67b274af3860', // Secret Key của bạn
+        user: this.configService.get('MAIL_USER'),
+        pass: this.configService.get('MAIL_PASSWORD'),
       },
+    });
+  }
+
+  async sendEmailVerification(email: string, token: string): Promise<void> {
+    const verificationUrl = `${this.configService.get('FRONTEND_URL')}/verify-email?token=${token}`;
+    
+    await this.transporter.sendMail({
+      to: email,
+      subject: 'Verify your email',
+      html: `
+        <h1>Email Verification</h1>
+        <p>Please click the link below to verify your email address:</p>
+        <a href="${verificationUrl}">${verificationUrl}</a>
+        <p>This link will expire in 24 hours.</p>
+      `,
+    });
+  }
+
+  async sendPasswordResetEmail(email: string, token: string): Promise<void> {
+    const resetUrl = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${token}`;
+    
+    await this.transporter.sendMail({
+      to: email,
+      subject: 'Reset your password',
+      html: `
+        <h1>Password Reset</h1>
+        <p>Please click the link below to reset your password:</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you did not request this password reset, please ignore this email.</p>
+      `,
     });
   }
   async sendVerifyEmail(email: string, token: string): Promise<void> {
@@ -24,17 +56,6 @@ export class MailService {
       subject: 'Email Verification',
       text: `Please verify your email by clicking the following link: ${url}`,
       html: `<p>Please verify your email by clicking the following link: <a href="${url}">Verify Email</a></p>`,
-    });
-  }
-
-  async sendResetPasswordEmail(email: string, token: string): Promise<void> {
-    const url = `http://your-frontend-url.com/reset-password?token=${token}`;
-    await this.transporter.sendMail({
-      from: '"Your App" <no-reply@yourapp.com>',
-      to: email,
-      subject: 'Reset Your Password',
-      text: `Please reset your password by clicking the following link: ${url}`,
-      html: `<p>Please reset your password by clicking the following link: <a href="${url}">Reset Password</a></p>`,
     });
   }
 }
