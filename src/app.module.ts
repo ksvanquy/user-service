@@ -15,6 +15,7 @@ import { UsersModule } from '@users/users.module';
 import { RolesModule } from '@roles/roles.module';
 import { PermissionsModule } from '@permissions/permissions.module';
 import { MailModule } from './mail/mail.module';
+import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { MailModule } from './mail/mail.module';
     RolesModule,
     PermissionsModule,
     MailModule,
+    RefreshTokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],

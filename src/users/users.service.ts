@@ -55,21 +55,24 @@ export class UsersService {
     return result;
   }
 
-  async create(dto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const exists = await this.userRepository.findOne({
-      where: [{ username: dto.username }, { email: dto.email }],
+      where: [
+        { username: createUserDto.username },
+        { email: createUserDto.email },
+      ],
     });
     if (exists) throw new ConflictException('User already exists');
 
     const userWithEmail = await this.userRepository.findOne({
-      where: { email: dto.email },
+      where: { email: createUserDto.email },
     });
     if (userWithEmail) {
       throw new ConflictException('Email is already taken');
     }
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const user = this.userRepository.create({
-      ...dto,
+      ...createUserDto,
       password: hashedPassword,
     });
     const savedUser = await this.userRepository.save(user);

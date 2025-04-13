@@ -5,19 +5,18 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { User } from '@users/entities/user.entity';  // Sử dụng alias @entities
+import { User } from '@users/entities/user.entity'; // Sử dụng alias @entities
 import { RefreshToken } from '@refresh-token/entities/refresh-token.entity';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { RefreshTokenService } from './refresh-token.service';
+import { RefreshTokenService } from '@refresh-token/refresh-token.service';
 
 import { ScheduleModule } from '@nestjs/schedule';
 import { RefreshTokenModule } from '@refresh-token/refresh-token.module';
 import { RefreshTokenCleanupService } from '@refresh-token//refresh-token.cleanup.service'; // Import service dọn dẹp refresh token
 import { UsersModule } from '@users/users.module';
-
 
 @Module({
   imports: [
